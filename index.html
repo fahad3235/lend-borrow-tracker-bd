@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dhar Hishab - Lend / Borrow Tracker BD</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1 data-i18n="app_title">Dhar Hishab - Lend / Borrow Tracker</h1>
+    <p data-i18n="app_subtitle">Offline personal ledger for Bangladesh. Your data stays in this browser.</p>
+  </div>
+  <div class="lang-toggle" role="group" aria-label="Language">
+    <button id="lang-en" type="button" class="active">English</button>
+    <button id="lang-bn" type="button">Bangla</button>
+  </div>
+</header>
+<main>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" class="active" data-tab="dashboard" role="tab" aria-selected="true" data-i18n="tab_dashboard">Dashboard</button>
+    <button type="button" data-tab="people" role="tab" aria-selected="false" data-i18n="tab_people">People</button>
+    <button type="button" data-tab="transactions" role="tab" aria-selected="false" data-i18n="tab_transactions">Transactions</button>
+    <button type="button" data-tab="data" role="tab" aria-selected="false" data-i18n="tab_data">Data</button>
+  </nav>
+
+  <section id="panel-dashboard" class="panel active" role="tabpanel">
+    <div class="cards">
+      <div class="card"><div class="label" data-i18n="owed_to_you">Owed to you</div><div class="value pos" id="stat-owed">0.00</div><div class="sub" data-i18n="bdt">BDT</div></div>
+      <div class="card"><div class="label" data-i18n="you_owe">You owe</div><div class="value neg" id="stat-owe">0.00</div><div class="sub" data-i18n="bdt">BDT</div></div>
+      <div class="card"><div class="label" data-i18n="net">Net</div><div class="value" id="stat-net">0.00</div><div class="sub" data-i18n="bdt">BDT</div></div>
+      <div class="card"><div class="label" data-i18n="outstanding">People with outstanding balance</div><div class="value" id="stat-outstanding">0</div><div class="sub" data-i18n="outstanding_sub">Balance is not zero</div></div>
+    </div>
+    <div class="section">
+      <h2 data-i18n="due_title">Due soon / Overdue</h2>
+      <p class="hint" data-i18n="due_hint">Earliest due date among a person's LEND entries. Partial repayments do not retire individual due dates.</p>
+      <div id="due-list"></div>
+      <div id="due-empty" class="empty" data-i18n="due_empty">No due or overdue amounts.</div>
+    </div>
+    <div class="section">
+      <h2 data-i18n="balances_title">Balances by person</h2>
+      <div id="balance-list"></div>
+      <div id="balance-empty" class="empty" data-i18n="dashboard_empty">No people yet. Add a person to start tracking.</div>
+    </div>
+  </section>
+
+  <section id="panel-people" class="panel" role="tabpanel">
+    <div class="section">
+      <h2 data-i18n="add_person">Add person</h2>
+      <form id="person-form" novalidate>
+        <div>
+          <label for="person-name" data-i18n="name_label">Name</label>
+          <input id="person-name" type="text" maxlength="60" autocomplete="name" required>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="person-mobile" data-i18n="mobile_label">BD mobile (optional)</label>
+            <input id="person-mobile" type="tel" placeholder="01XXXXXXXXX" autocomplete="tel">
+          </div>
+          <div>
+            <label for="person-note" data-i18n="note_label">Note (optional)</label>
+            <input id="person-note" type="text" maxlength="500">
+          </div>
+        </div>
+        <div class="error" id="person-error" role="alert"></div>
+        <div><button class="btn btn-primary" type="submit" data-i18n="add_person_btn">Add person</button></div>
+      </form>
+    </div>
+    <div class="section">
+      <h2 data-i18n="people_list">People</h2>
+      <div id="people-list"></div>
+      <div id="people-empty" class="empty" data-i18n="people_empty">No people yet.</div>
+    </div>
+  </section>
+
+  <section id="panel-transactions" class="panel" role="tabpanel">
+    <div class="section">
+      <h2 data-i18n="add_tx">Add transaction</h2>
+      <form id="tx-form" novalidate>
+        <div class="form-row">
+          <div>
+            <label for="tx-person" data-i18n="person_label">Person</label>
+            <select id="tx-person" required></select>
+          </div>
+          <div>
+            <label for="tx-type" data-i18n="type_label">Type</label>
+            <select id="tx-type" required>
+              <option value="LEND" data-i18n="type_lend">LEND - you lent, they owe you</option>
+              <option value="BORROW" data-i18n="type_borrow">BORROW - you borrowed, you owe them</option>
+              <option value="REPAY_RECEIVED" data-i18n="type_repay_received">REPAY RECEIVED - they repaid you</option>
+              <option value="REPAY_GIVEN" data-i18n="type_repay_given">REPAY GIVEN - you repaid them</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="tx-amount" data-i18n="amount_label">Amount (BDT)</label>
+            <input id="tx-amount" type="text" inputmode="decimal" placeholder="0.00" required>
+          </div>
+          <div>
+            <label for="tx-date" data-i18n="date_label">Date</label>
+            <input id="tx-date" type="date" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="tx-due" data-i18n="due_label">Due date (optional, for LEND / BORROW)</label>
+            <input id="tx-due" type="date">
+          </div>
+          <div>
+            <label for="tx-note" data-i18n="note_label">Note (optional)</label>
+            <input id="tx-note" type="text" maxlength="500">
+          </div>
+        </div>
+        <div class="error" id="tx-error" role="alert"></div>
+        <div><button class="btn btn-primary" type="submit" data-i18n="add_tx_btn">Add transaction</button></div>
+      </form>
+    </div>
+    <div class="section">
+      <h2 data-i18n="tx_list">Transactions</h2>
+      <div id="tx-list"></div>
+      <div id="tx-empty" class="empty" data-i18n="tx_empty">No transactions yet.</div>
+    </div>
+  </section>
+
+  <section id="panel-data" class="panel" role="tabpanel">
+    <div class="section">
+      <h2 data-i18n="data_title">Backup and restore</h2>
+      <div class="banner" id="data-banner" role="alert"></div>
+      <p class="hint" data-i18n="data_hint">Export downloads a JSON backup. Import validates strictly and keeps your current data if the file is invalid.</p>
+      <p><button class="btn btn-secondary" id="btn-export" type="button" data-i18n="export_btn">Export JSON</button></p>
+      <form id="import-form" novalidate>
+        <div>
+          <label for="import-file" data-i18n="import_label">Import JSON file</label>
+          <input id="import-file" type="file" accept=".json,application/json">
+        </div>
+        <div class="error" id="import-error" role="alert"></div>
+        <div><button class="btn btn-primary" type="submit" data-i18n="import_btn">Import</button></div>
+      </form>
+    </div>
+    <div class="section danger-zone">
+      <h2 data-i18n="danger_title">Danger zone</h2>
+      <p class="hint" data-i18n="danger_hint">Erase-all deletes every person and transaction. Type DELETE to confirm.</p>
+      <form id="erase-form" novalidate>
+        <div>
+          <label for="erase-confirm" data-i18n="erase_label">Type DELETE to erase everything</label>
+          <input id="erase-confirm" type="text" autocomplete="off">
+        </div>
+        <div class="error" id="erase-error" role="alert"></div>
+        <div><button class="btn btn-danger" type="submit" data-i18n="erase_btn">Erase all data</button></div>
+      </form>
+    </div>
+  </section>
+</main>
+<footer class="footer" data-i18n="footer">Personal tracker only - not accounting or legal software. No financial advice.</footer>
+<script src="js/logic.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
